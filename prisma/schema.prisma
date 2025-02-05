@@ -49,6 +49,39 @@ model Card{
   list      List @relation(fields:[listId],references:[id],onDelete:Cascade)
   @@index([listId])
 }
+enum ACTION{
+  CREATE
+  UPDATE
+  DELETE
+}
+enum ENTITY_TYPE{
+  BOARD
+  LIST
+  CARD
+}
+model AuditLog{
+  id String @id @default(uuid())
+  orgId String
+  action ACTION
+  entityId  String
+  entityType ENTITY_TYPE
+  userId String
+  userImage String@db.Text
+  userName  String@db.Text
+  entityTitle String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+}
+
+model OrgLimit{
+  id  String @id @default(uuid())
+  orgId String @unique
+  count  Int @default(0)
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
 
 
         
