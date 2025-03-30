@@ -1,77 +1,64 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
-}
-
-
 generator client {
   provider = "prisma-client-js"
 }
-model Board{
-  id            String @id @default(uuid())
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Board {
+  id            String   @id @default(uuid())
   orgId         String
   title         String
-  imageId        String 
-  imageThumbUrl  String @db.Text
-  imageFullUrl   String @db.Text  
-  imageUserName  String @db.Text 
-  imageLinkHTML  String @db.Text 
-  lists            List[]
- 
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  imageId       String
+  imageThumbUrl String
+  imageFullUrl  String
+  imageUserName String
+  imageLinkHTML String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  lists         List[]
 }
+
 model List {
-  id       String @id @default(uuid())
-  title    String
-  order    Int
-  
-  boardId  String
-  board   Board@relation(fields:[boardId],references:[id],onDelete:Cascade)
-  cards             Card[]
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  @@index([boardId])
-}
-model Card{
-  id   String@id @default(uuid())
-  title String
-  order Int
-  description String @db.Text
-  listId    String 
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  list      List @relation(fields:[listId],references:[id],onDelete:Cascade)
-  @@index([listId])
-}
-enum ACTION{
-  CREATE
-  UPDATE
-  DELETE
-}
-enum ENTITY_TYPE{
-  BOARD
-  LIST
-  CARD
-}
-model AuditLog{
-  id String @id @default(uuid())
-  orgId String
-  action ACTION
-  entityId  String
-  entityType ENTITY_TYPE
-  userId String
-  userImage String@db.Text
-  userName  String@db.Text
-  entityTitle String
+  id        String   @id @default(uuid())
+  title     String
+  order     Int
+  boardId   String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  cards     Card[]
+  board     Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
 
+  @@index([boardId])
+}
+
+model Card {
+  id          String   @id @default(uuid())
+  title       String
+  order       Int
+  description String
+  listId      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  list        List     @relation(fields: [listId], references: [id], onDelete: Cascade)
+
+  @@index([listId])
+}
+
+model AuditLog {
+  id          String      @id @default(uuid())
+  orgId       String
+  action      ACTION
+  entityId    String
+  entityType  ENTITY_TYPE
+  userId      String
+  userImage   String
+  userName    String
+  entityTitle String
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
 }
 
 model orgLimit {
@@ -81,13 +68,24 @@ model orgLimit {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
 model OrgSubscription {
-  id              String  @id @default(uuid()) @db.VarChar(36)
-  orgId           String  @unique
-  stripeCustomerId String? @unique @map("stripe_customer_id")
-  stripeSubscriptionId String? @unique @map("stripe_subscription_id")
-  stripePriceId   String? @unique @map("stripe_price_id")
+  id                     String    @id @default(uuid()) @db.VarChar(36)
+  orgId                  String    @unique
+  stripeCustomerId       String?   @unique @map("stripe_customer_id")
+  stripeSubscriptionId   String?   @unique @map("stripe_subscription_id")
+  stripePriceId          String?   @unique @map("stripe_price_id")
   stripeCurrentPeriodEnd DateTime? @map("stripe_current_period_end")
 }
 
+enum ACTION {
+  CREATE
+  UPDATE
+  DELETE
+}
 
+enum ENTITY_TYPE {
+  BOARD
+  LIST
+  CARD
+}
