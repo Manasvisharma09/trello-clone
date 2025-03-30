@@ -3,14 +3,15 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
 export async function GET(
-req:Request,
-{params}:{params:{cardId:string}}
-){
-    try{
-        const {userId,orgId}= await auth();
-        if(!userId||!orgId){
+    req: Request,
+    { params }: { params: { cardId: string } }
+) {
+    try {
+        // Authenticate User
+        const { userId, orgId } = await auth();
 
-            return new NextResponse("Uauthorized",{status:401});
+        if (!userId || !orgId) {
+            return new NextResponse("Unauthorized", { status: 401 });
         }
             
             const card=await db.card.findUnique({

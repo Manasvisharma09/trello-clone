@@ -2,7 +2,8 @@ import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 // Define public routes
-const isPublicRoute = createRouteMatcher(['/dashboard(.*)', '/forum(.*)']);
+const isPublicRoute = createRouteMatcher(['/dashboard(.*)', '/forum(.*)', '/api/webhook']);
+
 
 export default clerkMiddleware(async (auth, req) => {
   try {
@@ -16,7 +17,6 @@ export default clerkMiddleware(async (auth, req) => {
       const path = orgId ? `/organization/${orgId}` : '/select-org';
       if (req.nextUrl.pathname === '/' || isPublicRoute(req)) {
         const redirectUrl = new URL(path, req.url);
-        console.log("Redirecting authenticated user to:", redirectUrl.href);
         return NextResponse.redirect(redirectUrl);
       }
     }
@@ -41,8 +41,10 @@ export const config = {
   matcher: [
     '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
     '/(api|trpc)(.*)',
+    '/api/webhook' // <-- Adding webhook route explicitly
   ],
 };
+
 
 // Debugging logs for environment variables
 console.log("Test Variable:", process.env.TEST_VARIABLE);

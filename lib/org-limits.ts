@@ -3,100 +3,101 @@ import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
 
 export const incrementAvailableCount = async () => {
-    const { orgId } = await auth();
-    if (!orgId) {
-        throw new Error("Unauthorized");
-    }
-    const orgLimit = await db.orgLimit.findUnique({
-        where: { orgId }
-    });
-
-    if (orgLimit) {
-        const updatedLimit = await db.orgLimit.update({
-            where: { orgId },
-            data: { count: orgLimit.count ++}
-        });
-        console.log("Updated OrgLimit:", updatedLimit); // Debugging here
-    } else {
-        const newLimit = await db.orgLimit.create({
-            data: { orgId, count: 1 }
-        });
-        console.log("Created OrgLimit:", newLimit); // Debugging here
-    }
+    
+        const { orgId } = await auth();
+        if(!orgId){
+            throw new Error("Unauthorized");
+        }
+        const orgLimit=await db.orgLimit.findUnique({
+            where:{orgId}
+        })
+        if(orgLimit){
+            await db.orgLimit.update({
+                where:{orgId},
+                data:{ count: { increment: 1 } }, 
+            })
+        }else{
+            await db.orgLimit.create({
+                data: {orgId,count:1}
+            })
+        }      
+    
 };
 
 
+// Function to decrement the available count
 export const decreaseAvailableCount = async () => {
-    const { orgId } = await auth();
-    if (!orgId) {
+    const authData = await auth();
+    if (!authData || !authData.orgId) {
         throw new Error("Unauthorized");
     }
+
+    const { orgId } = authData;
 
     try {
         const orgLimit = await db.orgLimit.findUnique({ where: { orgId } });
 
-        console.log("Before Decrement - OrgLimit:", orgLimit);
-
+        console.log("🔍 Before Decrement - OrgLimit:", orgLimit);
         if (orgLimit && orgLimit.count > 0) {
-            await db.$transaction([
-                db.orgLimit.update({
-                    where: { orgId },
-                    data: { count: { decrement: 1 } }
-                })
-            ]);
-
-            const newCount = await db.orgLimit.findUnique({
+            const updatedLimit = await db.orgLimit.update({
                 where: { orgId },
-                select: { count: true },
+                data: { count: { decrement: 1 } },
             });
-
-            console.log("Updated Available Count After Decrement:", newCount);
+            console.log("✅ Updated OrgLimit:", updatedLimit);
+            return updatedLimit.count;
+        } else {
+            console.warn("⚠️ Decrement skipped: count already 0 or orgLimit missing.");
+            return 0;
         }
     } catch (error) {
-        console.error("Error updating org limit:", error);
+        console.error("❌ Error updating orgLimit count:", error);
+        throw new Error("Error decrementing orgLimit count.");
     }
 };
 
-
-export const hasAvailableCount = async () => {
-    const { orgId } = await auth();
-    if (!orgId) {
-        throw new Error("Unauthorized");
-    }
-
-    try {
-        const orgLimit = await db.orgLimit.findUnique({ where: { orgId } });
-
-        console.log("OrgLimit Check:", orgLimit);
-
-        return !orgLimit || orgLimit.count < MAX_FREE_BOARDS;
-    } catch (error) {
-        console.error("Error checking org limit:", error);
-        return false;
-    }
-};
-
+// Function to get the available count
 export const getAvailableCount = async () => {
-    const { orgId } = await auth();
-    if (!orgId) {
+    const authData = await auth();
+    if (!authData || !authData.orgId) {
+        console.log("❌ No Org ID found");
         return 0;
     }
 
-    try {
-        let orgLimit = await db.orgLimit.findUnique({ where: { orgId } });
+    const { orgId } = authData;
 
-        console.log("Retrieved OrgLimit:", orgLimit);
+    try {
+        const orgLimit = await db.orgLimit.findUnique({ where: { orgId } });
 
         if (!orgLimit) {
-            orgLimit = await db.orgLimit.create({
-                data: { orgId, count: 0 }
-            });
-            console.log("Created OrgLimit:", orgLimit);
+            console.log("❌ OrgLimit does not exist, returning 0.");
+            return 0;
         }
 
+        console.log("✅ Available Count:", orgLimit.count);
         return orgLimit.count;
     } catch (error) {
-        console.error("Error retrieving org limit:", error);
+        console.error("❌ Error retrieving org limit:", error);
         return 0;
+    }
+};
+
+// Function to check if more boards can be added
+export const hasAvailableCount = async () => {
+    const authData = await auth();
+    if (!authData || !authData.orgId) {
+        throw new Error("Unauthorized");
+    }
+
+    const { orgId } = authData;
+
+    try {
+        const orgLimit = await db.orgLimit.findUnique({ where: { orgId } });
+
+        const canAddMore = !orgLimit || orgLimit.count < MAX_FREE_BOARDS;
+        console.log(`✅ Has Available Count: ${canAddMore}`);
+        return canAddMore;
+    } catch (error) {
+        console.error("❌ Error checking org limit:", error);
+        throw new Error("Error checking available count.");
     }
 };
