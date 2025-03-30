@@ -3,10 +3,18 @@ import { notFound, redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { BoardNavbar } from "./_components/board-navbar";
 
-export async function generateMetadata({ params }: { params: { boardId: string } }) {
+// Fix: Awaiting params since Next.js might resolve it as a Promise
+export async function generateMetadata({ params }: { params: Promise<{ boardId: string }> }) {
+  const resolvedParams = await params; // Fix: Ensure params is awaited
+  console.log("generateMetadata params:", resolvedParams);
+
+  const { orgId } = await auth();
+  if (!orgId) {
+    return { title: "Board" };
+  }
+
   const board = await db.board.findUnique({
-    where: { id: params.boardId },
-    select: { title: true },
+    where: { id: resolvedParams.boardId, orgId },
   });
 
   return {
@@ -14,20 +22,31 @@ export async function generateMetadata({ params }: { params: { boardId: string }
   };
 }
 
-const BoardIdLayout = async ({ children, params }: { children: React.ReactNode; params: { boardId: string } }) => {
+const BoardIdLayout = async ({ children, params }: { children: React.ReactNode; params: Promise<{ boardId: string }> }) => {
+  const resolvedParams = await params; // Fix: Await params to get actual boardId
+  console.log("BoardIdLayout params:", resolvedParams);
+
   const { orgId } = await auth();
-  if (!orgId) redirect("/select-org");
+  console.log("BoardIdLayout orgId:", orgId);
+
+  if (!orgId) {
+    console.error("No orgId found, redirecting...");
+    redirect("/select-org");
+  }
 
   const board = await db.board.findUnique({
-    where: { id: params.boardId, orgId },
+    where: { id: resolvedParams.boardId, orgId },
   });
 
-  if (!board) notFound();
+  if (!board) {
+    console.error("Board not found, triggering notFound()");
+    notFound();
+  }
 
   return (
     <div
       className="relative h-screen bg-no-repeat bg-cover bg-center"
-      style={{ backgroundImage: `url(${board.imageFullUrl || "/default-background.jpg"})` }} // Fallback image
+      style={{ backgroundImage: `url(${board.imageFullUrl || "/default-background.jpg"})` }}
     >
       <BoardNavbar data={board} />
       <div className="absolute inset-0 bg-black/10" />

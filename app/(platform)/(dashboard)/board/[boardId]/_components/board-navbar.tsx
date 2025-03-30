@@ -1,6 +1,4 @@
-import { db } from "@/lib/db";
 import { Board } from "@prisma/client";
-import { auth } from "@clerk/nextjs/server";
 import { BoardTitleForm } from "./board-title";
 import { BoardOptions } from "./board-options";
 interface BoardNavbarProps{

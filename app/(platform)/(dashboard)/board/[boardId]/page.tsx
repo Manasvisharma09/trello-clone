@@ -4,25 +4,29 @@ import { redirect } from "next/navigation";
 import { ListContainer } from "./_components/list-container";
 
 interface BoardIdPageProps {
-  params?: { boardId?: string }; // ✅ Ensure params are optional & safely checked
+  params: Promise<{ boardId: string }>; // 🔥 Fix: Make params a Promise
 }
 
 const BoardIdPage = async ({ params }: BoardIdPageProps) => {
-  if (!params?.boardId) {
-    return redirect("/select-org"); // ✅ Redirect if boardId is missing
-  }
+  const resolvedParams = await params; // 🔥 Fix: Await params before use
+  console.log("✅ Resolved Params:", resolvedParams);
 
-  const { orgId } = await auth();
-  if (!orgId) {
+  if (!resolvedParams?.boardId) {
+    console.error("❌ No boardId found, redirecting...");
     return redirect("/select-org");
   }
 
-  console.log("✅ Board ID:", params.boardId);
+  const { orgId } = await auth();
   console.log("✅ Org ID:", orgId);
+
+  if (!orgId) {
+    console.error("❌ No orgId found, redirecting...");
+    return redirect("/select-org");
+  }
 
   const lists = await db.list.findMany({
     where: {
-      boardId: params.boardId,
+      boardId: resolvedParams.boardId,
       board: {
         orgId,
       },
@@ -41,7 +45,7 @@ const BoardIdPage = async ({ params }: BoardIdPageProps) => {
 
   return (
     <div className="p-4 h-full overflow-x-auto">
-      <ListContainer boardId={params.boardId} data={lists} />
+      <ListContainer boardId={resolvedParams.boardId} data={lists} />
     </div>
   );
 };

@@ -9,6 +9,20 @@ import { defaultImages } from "@/constants/images";
 import Link from "next/link";
 import { FormErrors } from "./form-error";
 
+interface UnsplashImage {
+  id: string;
+  urls: {
+    thumb: string;
+    full: string;
+  };
+  links: {
+    html: string;
+  };
+  user: {
+    name: string;
+  };
+}
+
 interface FormPickerProps {
   id: string;
   errors?: Record<string, string[] | undefined>;
@@ -17,7 +31,7 @@ interface FormPickerProps {
 
 export const FormPicker = ({ id, errors, onImageSelect }: FormPickerProps) => {
   const { pending } = useFormStatus();
-  const [images, setImages] = useState<Array<Record<string, any>>>(defaultImages);
+  const [images, setImages] = useState<UnsplashImage[]>(defaultImages);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
 
@@ -28,36 +42,28 @@ export const FormPicker = ({ id, errors, onImageSelect }: FormPickerProps) => {
           collectionIds: ["317099"],
           count: 9,
         });
-        if (result && result.response) {
-          const newImages = result.response as Array<Record<string, any>>;
-          setImages(newImages);
+        if (result?.response) {
+          setImages(result.response as UnsplashImage[]);
         } else {
-          console.error("failed to load images");
+          console.error("Failed to load images");
         }
       } catch (error) {
-        console.log(error);
+        console.error(error);
         setImages(defaultImages);
       } finally {
         setIsLoading(false);
       }
     };
+
     fetchImages();
   }, []);
 
-  const handleImageClick = (image: any) => {
+  const handleImageClick = (image: UnsplashImage) => {
     if (pending) return;
     const imgId = `${image.id}|${image.urls.thumb}|${image.urls.full}|${image.links.html}|${image.user.name}`;
     setSelectedImageId(imgId);
-    onImageSelect(imgId); // Update parent state
-    console.log("Selected image data:", {
-      id: image.id,
-      url: image.urls.thumb,
-    });
+    onImageSelect(imgId);
   };
-
-  useEffect(() => {
-    console.log("Selected Image ID:", selectedImageId);
-  }, [selectedImageId]);
 
   if (isLoading) {
     return (
@@ -89,7 +95,6 @@ export const FormPicker = ({ id, errors, onImageSelect }: FormPickerProps) => {
               disabled={pending}
               value={`${image.id}|${image.urls.thumb}|${image.urls.full}|${image.links.html}|${image.user.name}`}
             />
-
             <Image
               src={image.urls.thumb}
               alt="Unsplash image"
@@ -104,8 +109,7 @@ export const FormPicker = ({ id, errors, onImageSelect }: FormPickerProps) => {
             <Link
               href={image.links.html}
               target="_blank"
-              className="opacity-0 group-hover:opacity-100 absolute bottom-0 w-full text-[10px] truncate text-white hover:underline p-1
-                bg-black/50"
+              className="opacity-0 group-hover:opacity-100 absolute bottom-0 w-full text-[10px] truncate text-white hover:underline p-1 bg-black/50"
             >
               {image.user.name}
             </Link>

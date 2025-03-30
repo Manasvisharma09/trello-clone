@@ -8,7 +8,6 @@ import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MAX_FREE_BOARDS } from "@/constants/boards";
 import { getAvailableCount } from "@/lib/org-limits";
-import { revalidatePath } from "next/cache";
 import { checkSubscription } from "@/lib/subscription";
 
 export const BoardList = async () => {
