@@ -4,10 +4,10 @@ import { db } from "@/lib/db";
 
 export async function GET(
   req: Request,
-  context: { params: { cardId: string } } // ✅ FIXED
+  { params }: { params: { cardId: string } } // ✅ Correct typing
 ) {
   try {
-    const { cardId } = context.params; // ✅ FIXED
+    const { cardId } = params;
     console.log("✅ Card ID:", cardId);
 
     const { userId, orgId } = await auth();
