@@ -4,22 +4,28 @@ import { db } from "@/lib/db";
 
 export async function GET(
   req: Request,
-  { params }: { params: { cardId: string } } // ✅ Correct typing
+  { params }: { params: { cardId: string } }
 ) {
   try {
-    const { cardId } = params;
-    console.log("✅ Card ID:", cardId);
-
+    console.log("✅ Params:", params);
+    
+    // Authenticate User
     const { userId, orgId } = await auth();
-
+    
     if (!userId || !orgId) {
       console.error("❌ Unauthorized request");
       return new NextResponse("Unauthorized", { status: 401 });
     }
-
+    
+    // Fetch Card Data
     const card = await db.card.findUnique({
       where: {
-        id: cardId,
+        id: params.cardId,
+        list: {
+          board: {
+            orgId,
+          },
+        },
       },
       include: {
         list: {
@@ -29,7 +35,7 @@ export async function GET(
         },
       },
     });
-
+    
     return NextResponse.json(card);
   } catch (error) {
     console.error("❌ Internal Error:", error);
