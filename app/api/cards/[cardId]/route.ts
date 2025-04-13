@@ -2,10 +2,13 @@ import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
-export async function GET(
-  req: Request,
-  { params }: { params: { cardId: string } }
-) {
+type Params = {
+  params: {
+    cardId: string;
+  }
+}
+
+export async function GET(req: Request, { params }: Params) {
   try {
     console.log("✅ Params:", params);
     
