@@ -4,24 +4,24 @@ import { db } from "@/lib/db";
 
 export async function GET(
   req: Request,
-  context: { params: Promise<{ cardId: string }> } // 🔥 Fix: params is a Promise
+  { params }: { params: { cardId: string } }
 ) {
   try {
-    const resolvedParams = await context.params; // 🔥 Fix: Await params
-    console.log("✅ Resolved Params:", resolvedParams);
-
+    const cardId = params.cardId;
+    console.log("✅ Card ID:", cardId);
+    
     // Authenticate User
     const { userId, orgId } = await auth();
-
+    
     if (!userId || !orgId) {
       console.error("❌ Unauthorized request");
       return new NextResponse("Unauthorized", { status: 401 });
     }
-
+    
     // Fetch Card Data
     const card = await db.card.findUnique({
       where: {
-        id: resolvedParams.cardId,
+        id: cardId,
         list: {
           board: {
             orgId,
@@ -36,7 +36,7 @@ export async function GET(
         },
       },
     });
-
+    
     return NextResponse.json(card);
   } catch (error) {
     console.error("❌ Internal Error:", error);
