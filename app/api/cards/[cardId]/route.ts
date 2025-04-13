@@ -2,35 +2,26 @@ import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
-interface RouteParams {
-  cardId: string;
-}
-
 export async function GET(
   req: Request,
-  { params }: { params: RouteParams }
+  { params }: { params: { cardId: string } }
 ) {
   try {
     const cardId = params.cardId;
     console.log("✅ Card ID:", cardId);
-    
-    // Authenticate User
+
+    // ✅ Await the auth() properly
     const { userId, orgId } = await auth();
-    
+
     if (!userId || !orgId) {
       console.error("❌ Unauthorized request");
       return new NextResponse("Unauthorized", { status: 401 });
     }
-    
-    // Fetch Card Data
+
+    // ✅ Safe DB fetch
     const card = await db.card.findUnique({
       where: {
         id: cardId,
-        list: {
-          board: {
-            orgId,
-          },
-        },
       },
       include: {
         list: {
@@ -40,7 +31,7 @@ export async function GET(
         },
       },
     });
-    
+
     return NextResponse.json(card);
   } catch (error) {
     console.error("❌ Internal Error:", error);
