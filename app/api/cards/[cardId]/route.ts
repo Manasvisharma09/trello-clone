@@ -2,9 +2,13 @@ import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
+interface RouteParams {
+  cardId: string;
+}
+
 export async function GET(
   req: Request,
-  { params }: { params: { cardId: string } }
+  { params }: { params: RouteParams }
 ) {
   try {
     const cardId = params.cardId;
