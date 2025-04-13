@@ -4,13 +4,12 @@ import { db } from "@/lib/db";
 
 export async function GET(
   req: Request,
-  context: { params: Promise<{ cardId: string }> } // 🔥 Fix: params is a Promise
+  context: { params: { cardId: string } } // ✅ FIXED
 ) {
   try {
-    const resolvedParams = await context.params; // 🔥 Fix: Await params
-    console.log("✅ Resolved Params:", resolvedParams);
+    const { cardId } = context.params; // ✅ FIXED
+    console.log("✅ Card ID:", cardId);
 
-    // Authenticate User
     const { userId, orgId } = await auth();
 
     if (!userId || !orgId) {
@@ -18,15 +17,9 @@ export async function GET(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    // Fetch Card Data
     const card = await db.card.findUnique({
       where: {
-        id: resolvedParams.cardId,
-        list: {
-          board: {
-            orgId,
-          },
-        },
+        id: cardId,
       },
       include: {
         list: {
