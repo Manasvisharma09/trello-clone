@@ -3,22 +3,19 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
 export async function GET(
-  req: Request,
-  { params }: { params: { cardId: string } }
+  request: Request,
+  context: { params: { cardId: string } }
 ) {
   try {
-    const cardId = params.cardId;
-    console.log("✅ Card ID:", cardId);
+    const cardId = context.params.cardId;
+    console.log("Card ID:", cardId);
 
-    // ✅ Await the auth() properly
     const { userId, orgId } = await auth();
 
     if (!userId || !orgId) {
-      console.error("❌ Unauthorized request");
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    // ✅ Safe DB fetch
     const card = await db.card.findUnique({
       where: {
         id: cardId,
@@ -34,7 +31,7 @@ export async function GET(
 
     return NextResponse.json(card);
   } catch (error) {
-    console.error("❌ Internal Error:", error);
+    console.error("[CARD_ID_GET]", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
 }
