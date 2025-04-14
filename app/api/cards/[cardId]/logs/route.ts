@@ -5,22 +5,21 @@ import { ENTITY_TYPE } from "@prisma/client";
 
 export async function GET(
   request: Request,
-  context: { params: { cardId: string } }
+  {params}: { params:{cardId: string } }
 ) {
   try {
-    const { cardId } = context.params;
-    console.log("✅ Resolved Params:", cardId);
-
     const { userId, orgId } = await auth();
     if (!userId || !orgId) {
       console.error("❌ Unauthorized request");
       return new NextResponse("Unauthorized", { status: 401 });
     }
+   
+    
 
     const auditLogs = await db.auditLog.findMany({
       where: {
         orgId,
-        entityId: cardId,
+        entityId: params.cardId,
         entityType: ENTITY_TYPE.CARD,
       },
       orderBy: {
