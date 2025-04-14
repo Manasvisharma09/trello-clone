@@ -5,11 +5,11 @@ import { ENTITY_TYPE } from "@prisma/client";
 
 export async function GET(
   request: Request,
-  context: { params: Promise<{ cardId: string }> } // 🔥 Fix: Make params a Promise
+  context: { params: { cardId: string } }
 ) {
   try {
-    const resolvedParams = await context.params; // 🔥 Fix: Await params before using
-    console.log("✅ Resolved Params:", resolvedParams);
+    const { cardId } = context.params;
+    console.log("✅ Resolved Params:", cardId);
 
     const { userId, orgId } = await auth();
     if (!userId || !orgId) {
@@ -20,7 +20,7 @@ export async function GET(
     const auditLogs = await db.auditLog.findMany({
       where: {
         orgId,
-        entityId: resolvedParams.cardId,
+        entityId: cardId,
         entityType: ENTITY_TYPE.CARD,
       },
       orderBy: {
