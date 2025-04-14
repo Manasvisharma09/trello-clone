@@ -3,9 +3,13 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { ENTITY_TYPE } from "@prisma/client";
 
+interface Params {
+  cardId: string;
+}
+
 export async function GET(
   request: Request,
-  {params}: { params:{cardId: string } }
+  context: { params: Promise<Params> }
 ) {
   try {
     const { userId, orgId } = await auth();
@@ -13,13 +17,15 @@ export async function GET(
       console.error("❌ Unauthorized request");
       return new NextResponse("Unauthorized", { status: 401 });
     }
+    const resolvedParams = await context.params; // Await the params if they are async
+    const { cardId } = resolvedParams;
    
     
 
     const auditLogs = await db.auditLog.findMany({
       where: {
         orgId,
-        entityId: params.cardId,
+        entityId: cardId,
         entityType: ENTITY_TYPE.CARD,
       },
       orderBy: {
